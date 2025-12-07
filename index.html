@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Aura — Architect your wealth</title>
+
+  <!-- Google fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#05070a;
+      --blue-1: #00f0ff;
+      --blue-2: #00a9ff;
+      --soft-white: rgba(255,255,255,0.95);
+      --muted: rgba(255,255,255,0.12);
+    }
+
+    html,body{
+      height:100%;
+      margin:0;
+      font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background: radial-gradient(1200px 800px at 20% 60%, rgba(4,20,32,0.25), transparent 10%),
+                  linear-gradient(180deg,#02050a, #071123 60%, #02050a 100%),
+                  var(--bg);
+      color:var(--soft-white);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      overflow:hidden;
+    }
+
+    /* Top nav */
+    .nav {
+      position:fixed;
+      left:50%;
+      transform:translateX(-50%);
+      top:18px;
+      display:flex;
+      gap:18px;
+      align-items:center;
+      z-index:60;
+      padding:8px 18px;
+      border-radius:24px;
+      backdrop-filter: blur(8px) saturate(1.1);
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      box-shadow: 0 6px 18px rgba(2,8,12,0.6);
+      border: 1px solid rgba(255,255,255,0.03);
+    }
+    .nav .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-weight:600;
+    }
+    .nav .menu{ display:flex; gap:22px; color:rgba(255,255,255,0.7); font-size:14px; }
+    .nav .pill { margin-left:14px; padding:8px 12px; border-radius:999px; background:linear-gradient(90deg,#fff,#fff); background-clip:padding-box; color:#032; font-weight:600; font-size:13px; }
+
+    /* Layout */
+    .wrap{
+      position:relative;
+      width:100%;
+      height:100vh;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      align-items:center;
+      padding:80px 6vw;
+      box-sizing:border-box;
+      gap:40px;
+      z-index:10;
+    }
+
+    /* Left hero */
+    .hero{
+      max-width:720px;
+      z-index:30;
+    }
+    h1{
+      font-family: "Playfair Display", serif;
+      font-size:64px;
+      line-height:1.02;
+      margin:0 0 18px 0;
+      color:linear-gradient(90deg,var(--blue-2),var(--blue-1));
+      -webkit-background-clip:text;
+      background-clip:text;
+      color:var(--soft-white);
+      letter-spacing:-0.6px;
+      text-shadow: 0 6px 30px rgba(0,160,255,0.06);
+    }
+    h1 .accent { color:var(--blue-1); text-shadow:0 8px 40px rgba(0,170,255,0.14); font-weight:700; }
+
+    p.lead{
+      color:rgba(255,255,255,0.75);
+      margin-top:8px;
+      font-size:18px;
+      line-height:1.6;
+      max-width:540px;
+    }
+
+    .btn-row{
+      margin-top:26px;
+      display:flex;
+      gap:14px;
+      align-items:center;
+    }
+
+    /* Initialize Protocol button with orbiting dot */
+    .btn-primary{
+      position:relative;
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:12px 20px;
+      border-radius:999px;
+      border:1px solid rgba(0,160,255,0.25);
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      box-shadow: inset 0 -6px 12px rgba(0,0,0,0.6), 0 10px 40px rgba(0,120,200,0.06);
+      color:var(--soft-white);
+      font-weight:600;
+      cursor:pointer;
+      overflow:visible;
+    }
+
+    /* orbiting dot around button */
+    .orbit-wrap{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+    }
+    .orbit {
+      position:absolute;
+      width:calc(100% + 18px);
+      height:calc(100% + 18px);
+      top:50%;
+      left:50%;
+      transform:translate(-50%,-50%);
+      border-radius:999px;
+      pointer-events:none;
+    }
+    .orbit .dot {
+      position:absolute;
+      width:8px;
+      height:8px;
+      border-radius:100%;
+      background: radial-gradient(circle at 40% 30%, #e8ffff, #00e6ff 30%, #00a9ff 80%);
+      box-shadow: 0 0 18px rgba(0,170,255,0.85), 0 0 6px rgba(0,170,255,0.6);
+      top:0;
+      left:50%;
+      transform:translateX(-50%);
+      animation: orbit-rotate 2.4s linear infinite;
+    }
+    @keyframes orbit-rotate {
+      from { transform: translateX(-50%) rotate(0deg) translateY(-6px) rotate(0deg); }
+      to { transform: translateX(-50%) rotate(360deg) translateY(-6px) rotate(-360deg); }
+    }
+
+    .btn-ghost{
+      padding:12px 18px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,0.06);
+      background: transparent;
+      color:rgba(255,255,255,0.9);
+      cursor:pointer;
+      font-weight:600;
+    }
+
+    /* Right canvas area */
+    .stage {
+      position:relative;
+      height:80vh;
+      border-radius:18px;
+      overflow:visible;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      z-index:12;
+    }
+
+    /* center orb marker label */
+    .center-orb {
+      position:absolute;
+      width:40px;
+      height:40px;
+      left:60%;
+      top:50%;
+      transform:translate(-50%,-50%);
+      border-radius:50%;
+      z-index:35;
+      pointer-events:none;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .center-orb .glow{
+      width:12px; height:12px; border-radius:50%;
+      background: radial-gradient(circle at 30% 20%, #e8ffff, #00d1ff 30%, #0078d6 70%);
+      box-shadow: 0 0 18px rgba(0,170,255,0.9);
+      animation: pulse 2.2s infinite ease-in-out;
+    }
+    @keyframes pulse{
+      0% { transform:scale(1); opacity:1; }
+      50% { transform:scale(1.45); opacity:0.6; }
+      100% { transform:scale(1); opacity:1; }
+    }
+
+    /* footer bar logos & text */
+    .footer{
+      position:fixed;
+      bottom:18px;
+      left:50%;
+      transform:translateX(-50%);
+      z-index:60;
+      color:rgba(255,255,255,0.8);
+      font-size:13px;
+      display:flex;
+      gap:18px;
+      align-items:center;
+      padding:8px 16px;
+      border-radius:12px;
+      backface-visibility:hidden;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border:1px solid rgba(255,255,255,0.02);
+      backdrop-filter: blur(6px);
+    }
+
+    /* small "made in" badge */
+    .made-badge{
+      position:fixed;
+      right:18px;
+      bottom:18px;
+      z-index:70;
+      background:rgba(0,0,0,0.6);
+      border-radius:8px;
+      padding:8px 10px;
+      font-size:12px;
+      color:rgba(255,255,255,0.8);
+      border:1px solid rgba(255,255,255,0.03);
+    }
+
+    /* SVG container covers entire viewport (behind the layout) */
+    #fx-svg{
+      position:fixed;
+      left:0;
+      top:0;
+      width:100%;
+      height:100%;
+      z-index:5;
+      pointer-events:none;
+    }
+
+    /* small pixelated border effect */
+    .pixel-border {
+      position:fixed;
+      inset:0;
+      z-index:6;
+      pointer-events:none;
+      background-image:
+        radial-gradient(circle at 2% 50%, rgba(0,186,255,0.08) 0px, transparent 6px),
+        radial-gradient(circle at 98% 50%, rgba(0,186,255,0.06) 0px, transparent 6px);
+      mask-image: linear-gradient(90deg, rgba(0,0,0,0.0), rgba(0,0,0,0.9) 6%, rgba(0,0,0,0.9) 94%, rgba(0,0,0,0));
+    }
+
+    /* responsive tweaks */
+    @media (max-width:980px){
+      .wrap{ grid-template-columns: 1fr; padding:60px 5vw; gap:24px; }
+      h1{ font-size:40px; }
+      .stage{ height:60vh; }
+      .center-orb{ left:70%; }
+    }
+
+    @media (max-width:520px){
+      h1{ font-size:30px; }
+      .hero{ max-width:100%; }
+      .nav{ top:10px; padding:6px 12px; gap:12px; }
+      .footer{ display:none; }
+    }
+  </style>
+</head>
+<body>
+  <!-- NAV -->
+  <div class="nav" role="navigation" aria-label="Main">
+    <div class="brand"><strong>Aura</strong></div>
+    <div class="menu">Philosophy <span style="opacity:.35">•</span> Ecosystem <span style="opacity:.35">•</span> Rates</div>
+    <div style="margin-left:18px;"><button class="pill">Start Engine</button></div>
+  </div>
+
+  <!-- SVG animation layer (behind content) -->
+  <svg id="fx-svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <defs>
+      <!-- turbulence for organic blob -->
+      <filter id="blobTurb" x="-50%" y="-50%" width="200%" height="200%">
+        <feTurbulence id="turb" type="fractalNoise" baseFrequency="0.015 0.012" numOctaves="3" stitchTiles="stitch"/>
+        <feColorMatrix type="saturate" values="2" />
+        <feGaussianBlur stdDeviation="20" result="blur"/>
+        <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+      </filter>
+
+      <!-- glow filter -->
+      <filter id="glow" x="-80%" y="-80%" width="260%" height="260%">
+        <feGaussianBlur stdDeviation="18" result="blur1"/>
+        <feMerge>
+          <feMergeNode in="blur1"/>
+          <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+      </filter>
+
+      <radialGradient id="auraGrad" cx="50%" cy="50%">
+        <stop offset="0%" stop-color="#7ff8ff" stop-opacity="1"/>
+        <stop offset="40%" stop-color="#00e1ff" stop-opacity="0.9"/>
+        <stop offset="100%" stop-color="#0068b5" stop-opacity="0.18"/>
+      </radialGradient>
+    </defs>
+
+    <!-- big plasma blob (multiple concentric blurred shapes for depth) -->
+    <g id="plasmaGroup" filter="url(#glow)">
+      <path id="plasmaPath" fill="url(#auraGrad)" opacity="0.82"></path>
+      <path id="plasmaPath2" fill="url(#auraGrad)" opacity="0.42" style="mix-blend-mode: screen;"></path>
+    </g>
+
+    <!-- dynamic flow lines (paths will be updated by JS) -->
+    <g id="flowLayer" stroke-linecap="round" stroke-linejoin="round" fill="none"></g>
+
+    <!-- decorative dotted grid -->
+    <g id="dots" opacity="0.06"></g>
+  </svg>
+
+  <!-- pixel border overlay -->
+  <div class="pixel-border"></div>
+
+  <!-- Main layout -->
+  <div class="wrap" role="main">
+    <div class="hero" aria-label="Hero">
+      <h1><span class="accent">Architect your wealth</span><br/>with absolute precision.</h1>
+      <p class="lead">Advanced financial protocols merged with intuitive design. We provide the infrastructure to accelerate your economic legacy.</p>
+
+      <div class="btn-row">
+        <button class="btn-primary" id="initializeBtn" aria-label="Initialize Protocol">
+          Initialize Protocol
+          <div class="orbit-wrap" aria-hidden="true">
+            <div class="orbit"><div class="dot"></div></div>
+          </div>
+        </button>
+
+        <button class="btn-ghost">View Ecosystem →</button>
+      </div>
+    </div>
+
+    <div class="stage" aria-hidden="true">
+      <!-- center orb is placed visually (absolute) -->
+      <div class="center-orb" id="centerOrb">
+        <div class="glow"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div style="opacity:.9;">Amplitude</div>
+    <div style="opacity:.65;">Anthropic</div>
+    <div style="opacity:.55;">Airbrake</div>
+    <div style="opacity:.3;margin-left:10px;">• Trusted by industry leaders</div>
+  </div>
+
+  <div class="made-badge">Made in Aura</div>
+
+  <!-- Script: animation logic -->
+  <script>
+    // Responsive helper to map coordinates between screen and svg viewBox
+    const svg = document.getElementById('fx-svg');
+    const viewW = 1920, viewH = 1080;
+
+    // central orb target position (normalized relative to viewBox)
+    let orbPos = { x: 0.6 * viewW, y: 0.5 * viewH };
+
+    // Grab elements
+    const plasmaPath = document.getElementById('plasmaPath');
+    const plasmaPath2 = document.getElementById('plasmaPath2');
+    const turb = document.getElementById('turb');
+    const flowLayer = document.getElementById('flowLayer');
+    const dotsGroup = document.getElementById('dots');
+
+    // Create few flow lines (paths) that animate toward orb
+    const FLOW_COUNT = 6;
+    const flows = [];
+
+    function rand(min,max){ return Math.random()*(max-min)+min; }
+
+    // initialize flows: random near edges, curving toward orb
+    for(let i=0;i<FLOW_COUNT;i++){
+      const p = document.createElementNS('http://www.w3.org/2000/svg','path');
+      p.setAttribute('stroke-width', 1.8 + Math.random()*1.8);
+      p.setAttribute('stroke-linecap','round');
+      p.setAttribute('stroke','url(#auraGrad)');
+      p.setAttribute('opacity', 0.55);
+      p.setAttribute('stroke-dasharray','120');
+      p.setAttribute('stroke-dashoffset', String( Math.round(Math.random()*400) ));
+      flowLayer.appendChild(p);
+
+      flows.push({
+        el: p,
+        seedAngle: Math.random()*Math.PI*2,
+        start: { x: rand(0.02,0.98)*viewW, y: rand(0.02,0.98)*viewH },
+        ctrl1: { x: rand(0.3,0.7)*viewW, y: rand(0.1,0.9)*viewH },
+        ctrl2: { x: rand(0.3,0.7)*viewW, y: rand(0.1,0.9)*viewH },
+        phase: Math.random()*Math.PI*2,
+        speed: 0.001 + Math.random()*0.003
+      });
+    }
+
+    // add decorative dots grid
+    function buildDots(){
+      const gap = 28;
+      for(let x = 0; x < viewW; x+=gap){
+        for(let y = 0; y < viewH; y+=gap){
+          if(Math.random() > 0.995) {
+            const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+            c.setAttribute('cx', x + (Math.random()*6-3));
+            c.setAttribute('cy', y + (Math.random()*6-3));
+            c.setAttribute('r', 0.9 + Math.random()*1.8);
+            c.setAttribute('fill','white');
+            dotsGroup.appendChild(c);
+          }
+        }
+      }
+    }
+    buildDots();
+
+    // plasma blob shape generator (smooth random blob via points -> closed spline)
+    function blobPath(cx, cy, baseRadius, points, noiseScale, time){
+      const pts = [];
+      for(let i=0;i<points;i++){
+        const a = (i/points) * Math.PI*2;
+        // Perlin-like simple noise: combine sines
+        const noise = Math.sin(a*2 + time*0.6) * 0.4 + Math.cos(a*3.7 + time*0.9) * 0.3 + Math.sin(time*0.4 + i)*0.2;
+        const r = baseRadius * (1 + noise*noiseScale);
+        const x = cx + Math.cos(a) * r;
+        const y = cy + Math.sin(a) * r;
+        pts.push([x,y]);
+      }
+      // convert pts to smooth svg path (Catmull-Rom -> bezier conversion)
+      function catmullRom2bezier(points){
+        let d = "M" + points[0][0].toFixed(2) + " " + points[0][1].toFixed(2);
+        for(let i=0;i<points.length;i++){
+          const p0 = points[(i-1+points.length)%points.length];
+          const p1 = points[i];
+          const p2 = points[(i+1)%points.length];
+          const p3 = points[(i+2)%points.length];
+
+          const cp1x = p1[0] + (p2[0]-p0[0]) / 6;
+          const cp1y = p1[1] + (p2[1]-p0[1]) / 6;
+          const cp2x = p2[0] - (p3[0]-p1[0]) / 6;
+          const cp2y = p2[1] - (p3[1]-p1[1]) / 6;
+          d += ` C ${cp1x.toFixed(2)} ${cp1y.toFixed(2)}, ${cp2x.toFixed(2)} ${cp2y.toFixed(2)}, ${p2[0].toFixed(2)} ${p2[1].toFixed(2)}`;
+        }
+        d += " Z";
+        return d;
+      }
+      return catmullRom2bezier(pts);
+    }
+
+    // main animation loop
+    let lastT = null;
+    let t = 0;
+
+    function animate(now){
+      if(!lastT) lastT = now;
+      const dt = (now - lastT) / 1000; // seconds
+      lastT = now;
+      t += dt;
+
+      // move orb gently (subtle drifting)
+      const orbDriftRadius = Math.min(window.innerWidth, window.innerHeight) * 0.05;
+      const orbX = orbPos.x + Math.cos(t*0.32) * orbDriftRadius * 0.02 * (window.innerWidth/1200);
+      const orbY = orbPos.y + Math.sin(t*0.41) * orbDriftRadius * 0.03 * (window.innerHeight/700);
+
+      // compute plasma blob centered near orb but drifting outward slowly
+      const centerX = orbX + Math.cos(t*0.12)* (window.innerWidth*0.08);
+      const centerY = orbY + Math.sin(t*0.09)* (window.innerHeight*0.03);
+
+      const baseR = Math.min(viewW, viewH) * 0.35 * (0.9 + Math.sin(t*0.21)*0.06);
+
+      const path1 = blobPath(centerX, centerY, baseR, 28, 0.18, t*1.2);
+      const path2 = blobPath(centerX + Math.cos(t*0.71)*60, centerY + Math.sin(t*0.6)*40, baseR*0.78, 22, 0.26, t*1.5);
+
+      plasmaPath.setAttribute('d', path1);
+      plasmaPath2.setAttribute('d', path2);
+      plasmaPath.setAttribute('transform', `translate(0,0)`);
+      plasmaPath2.setAttribute('transform', `translate(0,0)`);
+
+      // nudge feTurbulence for soft organic movement
+      const bfreq = 0.012 + 0.006*Math.abs(Math.sin(t*0.45));
+      turb.setAttribute('baseFrequency', `${bfreq} ${bfreq*0.8}`);
+
+      // animate flows: control points gradually move toward orb
+      for(let i=0;i<flows.length;i++){
+        const f = flows[i];
+        // move start slowly around edges
+        f.phase += f.speed * (1 + 0.5*Math.sin(t*0.7 + i));
+        const sx = f.start.x + Math.cos(t*0.2 + i) * 18 * (i%2?1:-1);
+        const sy = f.start.y + Math.sin(t*0.15 + i*0.7) * 14;
+
+        // control points drift and get attracted to orb
+        const c1x = f.ctrl1.x + Math.sin(t*0.9 + i) * 24 - (f.ctrl1.x - orbX) * 0.01;
+        const c1y = f.ctrl1.y + Math.cos(t*0.7 + i) * 18 - (f.ctrl1.y - orbY) * 0.01;
+        const c2x = f.ctrl2.x + Math.cos(t*0.6 + i) * 12 - (f.ctrl2.x - orbX) * 0.006;
+        const c2y = f.ctrl2.y + Math.sin(t*1.2 + i) * 20 - (f.ctrl2.y - orbY) * 0.006;
+
+        // a nice cubic bezier path from start -> ctrl1 -> ctrl2 -> near orb
+        const targetX = orbX + Math.cos(i*1.3 + t*0.3) * (60 + i*12);
+        const targetY = orbY + Math.sin(i*0.9 + t*0.24) * (30 + i*8);
+
+        const d = `M ${sx.toFixed(2)} ${sy.toFixed(2)} C ${c1x.toFixed(2)} ${c1y.toFixed(2)}, ${c2x.toFixed(2)} ${c2y.toFixed(2)}, ${targetX.toFixed(2)} ${targetY.toFixed(2)}`;
+        f.el.setAttribute('d', d);
+
+        // animate dashoffset to make stroke "flow" toward the orb
+        const dash = parseFloat(f.el.getAttribute('stroke-dashoffset') || 0);
+        f.el.setAttribute('stroke-dashoffset', (dash - (80 + i*12)*dt).toFixed(2));
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    requestAnimationFrame(animate);
+
+    // Update orbPos when window resizes or on load (map center target relative to viewport)
+    function updateOrbPos(){
+      // place orb visually around right center area (like screenshot)
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      // convert a target percentage of visible area to viewBox coords
+      const pctX = 0.62; // center-right
+      const pctY = 0.52;
+      const rect = svg.getBoundingClientRect();
+      const scaleX = viewW / rect.width;
+      const scaleY = viewH / rect.height;
+      // Map viewport pct to viewBox coords
+      orbPos.x = pctX * viewW;
+      orbPos.y = pctY * viewH;
+    }
+    window.addEventListener('resize', updateOrbPos);
+    updateOrbPos();
+
+    // Cursor-interaction: small repulsion and velocity on flows and orb
+    let mouse = {x: null, y: null};
+    window.addEventListener('mousemove', (e)=>{
+      const rect = svg.getBoundingClientRect();
+      // map to viewBox coords
+      mouse.x = (e.clientX - rect.left) * (viewW / rect.width);
+      mouse.y = (e.clientY - rect.top) * (viewH / rect.height);
+
+      // nudge orb slightly toward cursor
+      if(mouse.x && mouse.y){
+        orbPos.x += (mouse.x - orbPos.x) * 0.02;
+        orbPos.y += (mouse.y - orbPos.y) * 0.02;
+      }
+    });
+
+    // Slight automatic cursor-free drifting: keep orb near target but wandering
+    // Also, allow clicking the initialize button to create a ripple effect
+    const initBtn = document.getElementById('initializeBtn');
+    initBtn.addEventListener('click', ()=> {
+      // create a quick pulse: expand baseR briefly and flash glow
+      const initial = 1.0;
+      let start = performance.now();
+      const dur = 620;
+      function pulse(now){
+        const p = Math.min(1, (now - start)/dur);
+        // temporarily alter turb frequency for a flash-like feel
+        turb.setAttribute('baseFrequency', `${0.028 * (1-p) + 0.002*p} ${0.022 * (1-p) + 0.002*p}`);
+        if(p < 1) requestAnimationFrame(pulse);
+      }
+      requestAnimationFrame(pulse);
+      // small creative haptic feedback using focus
+      initBtn.animate([{transform:'scale(1)'},{transform:'scale(0.992)'},{transform:'scale(1)'}], {duration:320, easing:'ease-out'});
+    });
+
+    // Ensure SVG scales nicely on orientation change / load
+    window.addEventListener('load', ()=>{
+      // optional: set initial plasma shapes so page isn't blank for a frame
+      requestAnimationFrame(animate);
+    });
+
+  </script>
+</body>
+</html>
