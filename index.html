@@ -1,587 +1,536 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Aura — Architect your wealth</title>
+<head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vocal Morph VST</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+body {
+font-family: 'Inter', sans-serif;
+background-color: #050505;
+}
+/* Custom range slider styling */
+input[type=range] {
+-webkit-appearance: none;
+background: transparent;
+}
+input[type=range]::-webkit-slider-thumb {
+-webkit-appearance: none;
+height: 12px;
+width: 12px;
+border-radius: 50%;
+background: #e4e4e7;
+cursor: pointer;
+margin-top: -5px;
+box-shadow: 0 0 10px rgba(255,255,255,0.5);
+}
+input[type=range]::-webkit-slider-runnable-track {
+width: 100%;
+height: 2px;
+cursor: pointer;
+background: #27272a;
+border-radius: 1px;
+}
+/* Knob rotation logic */
+.knob-container {
+position: relative;
+display: flex;
+justify-content: center;
+align-items: center;
+}
+.glow-effect {
+box-shadow: 0 0 40px -10px var(--glow-color);
+}
+/* Subtle noise texture */
+.bg-noise {
+background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+}
+</style></head>
+<body class="bg-black text-zinc-400 h-screen w-full flex items-center justify-center overflow-hidden selection:bg-indigo-500 selection:text-white">
 
-  <!-- Google fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- VST Plugin Container -->
+    <div class="relative w-full max-w-5xl bg-zinc-950 rounded-xl border border-zinc-800 shadow-2xl flex flex-col overflow-hidden m-4 backdrop-blur-3xl bg-opacity-80">
+        
+        <!-- Background Gradients -->
+        <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+            <div class="absolute -top-[20%] left-[20%] w-[50%] h-[50%] bg-indigo-900/10 rounded-full blur-[120px]"></div>
+            <div class="absolute top-[40%] -right-[10%] w-[40%] h-[40%] bg-rose-900/10 rounded-full blur-[100px]"></div>
+        </div>
 
-  <style>
-    :root{
-      --bg:#05070a;
-      --blue-1: #00f0ff;
-      --blue-2: #00a9ff;
-      --soft-white: rgba(255,255,255,0.95);
-      --muted: rgba(255,255,255,0.12);
-    }
+        <!-- Header -->
+        <div class="relative z-10 flex items-center justify-between px-6 py-4 border-b border-zinc-900/50 bg-zinc-950/50">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center border border-zinc-800 shadow-inner">
+                    <span class="iconify text-indigo-400" data-icon="lucide:waves" data-width="18"></span>
+                </div>
+                <div>
+                    <h1 class="text-zinc-100 font-medium tracking-tight text-sm uppercase">VoxMorph</h1>
+                    <span class="text-xs text-zinc-500 tracking-wide">Neural Audio Transfer</span>
+                </div>
+            </div>
 
-    html,body{
-      height:100%;
-      margin:0;
-      font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-      background: radial-gradient(1200px 800px at 20% 60%, rgba(4,20,32,0.25), transparent 10%),
-                  linear-gradient(180deg,#02050a, #071123 60%, #02050a 100%),
-                  var(--bg);
-      color:var(--soft-white);
-      -webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing:grayscale;
-      overflow:hidden;
-    }
+            <!-- Preset Selector -->
+            <div class="flex items-center gap-4">
+                <button class="flex items-center gap-2 px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded text-xs transition-colors group">
+                    <span class="text-zinc-500 group-hover:text-zinc-300">Preset:</span>
+                    <span class="text-zinc-200">Cinematic Pad Vocal</span>
+                    <span class="iconify text-zinc-500" data-icon="lucide:chevron-down" data-width="12"></span>
+                </button>
+                
+                <div class="h-4 w-px bg-zinc-800"></div>
 
-    /* Top nav */
-    .nav {
-      position:fixed;
-      left:50%;
-      transform:translateX(-50%);
-      top:18px;
-      display:flex;
-      gap:18px;
-      align-items:center;
-      z-index:60;
-      padding:8px 18px;
-      border-radius:24px;
-      backdrop-filter: blur(8px) saturate(1.1);
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      box-shadow: 0 6px 18px rgba(2,8,12,0.6);
-      border: 1px solid rgba(255,255,255,0.03);
-    }
-    .nav .brand{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      font-weight:600;
-    }
-    .nav .menu{ display:flex; gap:22px; color:rgba(255,255,255,0.7); font-size:14px; }
-    .nav .pill { margin-left:14px; padding:8px 12px; border-radius:999px; background:linear-gradient(90deg,#fff,#fff); background-clip:padding-box; color:#032; font-weight:600; font-size:13px; }
+                <div class="flex items-center gap-2">
+                    <button class="p-1.5 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 rounded transition-all">
+                        <span class="iconify" data-icon="lucide:undo-2" data-width="14"></span>
+                    </button>
+                    <button class="p-1.5 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 rounded transition-all">
+                        <span class="iconify" data-icon="lucide:redo-2" data-width="14"></span>
+                    </button>
+                </div>
+            </div>
 
-    /* Layout */
-    .wrap{
-      position:relative;
-      width:100%;
-      height:100vh;
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      align-items:center;
-      padding:80px 6vw;
-      box-sizing:border-box;
-      gap:40px;
-      z-index:10;
-    }
+            <div class="flex items-center gap-3">
+                <span class="text-xs font-mono text-indigo-400">CPU 12%</span>
+                <button class="w-8 h-8 flex items-center justify-center text-zinc-500 hover:text-zinc-200 transition-colors">
+                    <span class="iconify" data-icon="lucide:settings-2" data-width="16"></span>
+                </button>
+            </div>
+        </div>
 
-    /* Left hero */
-    .hero{
-      max-width:720px;
-      z-index:30;
-    }
-    h1{
-      font-family: "Playfair Display", serif;
-      font-size:64px;
-      line-height:1.02;
-      margin:0 0 18px 0;
-      color:linear-gradient(90deg,var(--blue-2),var(--blue-1));
-      -webkit-background-clip:text;
-      background-clip:text;
-      color:var(--soft-white);
-      letter-spacing:-0.6px;
-      text-shadow: 0 6px 30px rgba(0,160,255,0.06);
-    }
-    h1 .accent { color:var(--blue-1); text-shadow:0 8px 40px rgba(0,170,255,0.14); font-weight:700; }
+        <!-- Main Workspace -->
+        <div class="relative z-10 flex flex-col md:flex-row h-[500px]">
+            
+            <!-- Left Controls: Parameters -->
+            <div class="w-full md:w-64 border-r border-zinc-900/50 p-6 flex flex-col gap-8 bg-zinc-950/30">
+                
+                <!-- Macro Controls -->
+                <div class="space-y-6">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-xs font-medium text-zinc-400 tracking-wider uppercase">Character</h3>
+                    </div>
 
-    p.lead{
-      color:rgba(255,255,255,0.75);
-      margin-top:8px;
-      font-size:18px;
-      line-height:1.6;
-      max-width:540px;
-    }
+                    <!-- Custom Knob Component -->
+                    <div class="grid grid-cols-2 gap-y-6 gap-x-4">
+                        <div class="flex flex-col items-center gap-2 group cursor-pointer" onclick="adjustKnob('timbre')">
+                            <div class="relative w-14 h-14 rounded-full bg-zinc-900 border border-zinc-800 shadow-lg flex items-center justify-center group-hover:border-zinc-700 transition-colors">
+                                <svg class="w-full h-full transform -rotate-90 pointer-events-none absolute" viewBox="0 0 100 100">
+                                    <circle cx="50" cy="50" r="44" stroke="#27272a" stroke-width="4" fill="none" />
+                                    <circle id="knob-timbre-track" cx="50" cy="50" r="44" stroke="#6366f1" stroke-width="4" fill="none" stroke-dasharray="276" stroke-dashoffset="100" class="transition-all duration-300" />
+                                </svg>
+                                <div class="w-1 h-3 bg-zinc-600 rounded-full transform -translate-y-4 origin-bottom rotate-45 transition-transform duration-300" id="knob-timbre-tick"></div>
+                            </div>
+                            <span class="text-xs text-zinc-500 group-hover:text-zinc-300">Timbre</span>
+                        </div>
 
-    .btn-row{
-      margin-top:26px;
-      display:flex;
-      gap:14px;
-      align-items:center;
-    }
+                        <div class="flex flex-col items-center gap-2 group cursor-pointer" onclick="adjustKnob('breath')">
+                            <div class="relative w-14 h-14 rounded-full bg-zinc-900 border border-zinc-800 shadow-lg flex items-center justify-center group-hover:border-zinc-700 transition-colors">
+                                <svg class="w-full h-full transform -rotate-90 pointer-events-none absolute" viewBox="0 0 100 100">
+                                    <circle cx="50" cy="50" r="44" stroke="#27272a" stroke-width="4" fill="none" />
+                                    <circle id="knob-breath-track" cx="50" cy="50" r="44" stroke="#ec4899" stroke-width="4" fill="none" stroke-dasharray="276" stroke-dashoffset="200" class="transition-all duration-300" />
+                                </svg>
+                                <div class="w-1 h-3 bg-zinc-600 rounded-full transform -translate-y-4 origin-bottom -rotate-45 transition-transform duration-300" id="knob-breath-tick"></div>
+                            </div>
+                            <span class="text-xs text-zinc-500 group-hover:text-zinc-300">Breath</span>
+                        </div>
+                        
+                        <div class="flex flex-col items-center gap-2 group cursor-pointer" onclick="adjustKnob('space')">
+                            <div class="relative w-14 h-14 rounded-full bg-zinc-900 border border-zinc-800 shadow-lg flex items-center justify-center group-hover:border-zinc-700 transition-colors">
+                                <svg class="w-full h-full transform -rotate-90 pointer-events-none absolute" viewBox="0 0 100 100">
+                                    <circle cx="50" cy="50" r="44" stroke="#27272a" stroke-width="4" fill="none" />
+                                    <circle id="knob-space-track" cx="50" cy="50" r="44" stroke="#10b981" stroke-width="4" fill="none" stroke-dasharray="276" stroke-dashoffset="150" class="transition-all duration-300" />
+                                </svg>
+                                <div class="w-1 h-3 bg-zinc-600 rounded-full transform -translate-y-4 origin-bottom rotate-0 transition-transform duration-300" id="knob-space-tick"></div>
+                            </div>
+                            <span class="text-xs text-zinc-500 group-hover:text-zinc-300">Space</span>
+                        </div>
 
-    /* Initialize Protocol button with orbiting dot */
-    .btn-primary{
-      position:relative;
-      display:inline-flex;
-      align-items:center;
-      gap:10px;
-      padding:12px 20px;
-      border-radius:999px;
-      border:1px solid rgba(0,160,255,0.25);
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      box-shadow: inset 0 -6px 12px rgba(0,0,0,0.6), 0 10px 40px rgba(0,120,200,0.06);
-      color:var(--soft-white);
-      font-weight:600;
-      cursor:pointer;
-      overflow:visible;
-    }
+                        <div class="flex flex-col items-center gap-2 group cursor-pointer" onclick="adjustKnob('detail')">
+                            <div class="relative w-14 h-14 rounded-full bg-zinc-900 border border-zinc-800 shadow-lg flex items-center justify-center group-hover:border-zinc-700 transition-colors">
+                                <svg class="w-full h-full transform -rotate-90 pointer-events-none absolute" viewBox="0 0 100 100">
+                                    <circle cx="50" cy="50" r="44" stroke="#27272a" stroke-width="4" fill="none" />
+                                    <circle id="knob-detail-track" cx="50" cy="50" r="44" stroke="#f59e0b" stroke-width="4" fill="none" stroke-dasharray="276" stroke-dashoffset="50" class="transition-all duration-300" />
+                                </svg>
+                                <div class="w-1 h-3 bg-zinc-600 rounded-full transform -translate-y-4 origin-bottom rotate-[100deg] transition-transform duration-300" id="knob-detail-tick"></div>
+                            </div>
+                            <span class="text-xs text-zinc-500 group-hover:text-zinc-300">Detail</span>
+                        </div>
+                    </div>
+                </div>
 
-    /* orbiting dot around button */
-    .orbit-wrap{
-      position:absolute;
-      inset:0;
-      pointer-events:none;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-    }
-    .orbit {
-      position:absolute;
-      width:calc(100% + 18px);
-      height:calc(100% + 18px);
-      top:50%;
-      left:50%;
-      transform:translate(-50%,-50%);
-      border-radius:999px;
-      pointer-events:none;
-    }
-    .orbit .dot {
-      position:absolute;
-      width:8px;
-      height:8px;
-      border-radius:100%;
-      background: radial-gradient(circle at 40% 30%, #e8ffff, #00e6ff 30%, #00a9ff 80%);
-      box-shadow: 0 0 18px rgba(0,170,255,0.85), 0 0 6px rgba(0,170,255,0.6);
-      top:0;
-      left:50%;
-      transform:translateX(-50%);
-      animation: orbit-rotate 2.4s linear infinite;
-    }
-    @keyframes orbit-rotate {
-      from { transform: translateX(-50%) rotate(0deg) translateY(-6px) rotate(0deg); }
-      to { transform: translateX(-50%) rotate(360deg) translateY(-6px) rotate(-360deg); }
-    }
+                <div class="h-px bg-zinc-800 w-full"></div>
 
-    .btn-ghost{
-      padding:12px 18px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,0.06);
-      background: transparent;
-      color:rgba(255,255,255,0.9);
-      cursor:pointer;
-      font-weight:600;
-    }
+                <!-- Input/Output Sliders -->
+                <div class="space-y-4">
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-xs">
+                            <span class="text-zinc-500">Input</span>
+                            <span class="text-zinc-300 font-mono">-6.0 dB</span>
+                        </div>
+                        <input type="range" class="w-full opacity-50 hover:opacity-100 transition-opacity" min="0" max="100" value="70">
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-xs">
+                            <span class="text-zinc-500">Output</span>
+                            <span class="text-zinc-300 font-mono">-2.4 dB</span>
+                        </div>
+                        <input type="range" class="w-full opacity-50 hover:opacity-100 transition-opacity" min="0" max="100" value="85">
+                    </div>
+                    
+                    <div class="flex justify-between items-center pt-2">
+                        <span class="text-xs text-zinc-500">Dry/Wet</span>
+                        <div class="w-24 h-1.5 bg-zinc-800 rounded-full relative overflow-hidden">
+                            <div class="absolute top-0 left-0 h-full w-[60%] bg-indigo-500 rounded-full"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-    /* Right canvas area */
-    .stage {
-      position:relative;
-      height:80vh;
-      border-radius:18px;
-      overflow:visible;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      z-index:12;
-    }
+            <!-- Center: Visualizer -->
+            <div class="flex-1 flex flex-col relative bg-zinc-950">
+                <!-- Visualizer Controls Overlay -->
+                <div class="absolute top-4 right-4 z-20 flex gap-2">
+                     <button onclick="togglePlayback()" id="playBtn" class="w-8 h-8 rounded bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white hover:border-zinc-700 transition-all">
+                        <span class="iconify" data-icon="lucide:play" data-width="14"></span>
+                    </button>
+                    <button class="w-8 h-8 rounded bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white hover:border-zinc-700 transition-all">
+                        <span class="iconify" data-icon="lucide:maximize-2" data-width="14"></span>
+                    </button>
+                </div>
 
-    /* center orb marker label */
-    .center-orb {
-      position:absolute;
-      width:40px;
-      height:40px;
-      left:60%;
-      top:50%;
-      transform:translate(-50%,-50%);
-      border-radius:50%;
-      z-index:35;
-      pointer-events:none;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-    }
-    .center-orb .glow{
-      width:12px; height:12px; border-radius:50%;
-      background: radial-gradient(circle at 30% 20%, #e8ffff, #00d1ff 30%, #0078d6 70%);
-      box-shadow: 0 0 18px rgba(0,170,255,0.9);
-      animation: pulse 2.2s infinite ease-in-out;
-    }
-    @keyframes pulse{
-      0% { transform:scale(1); opacity:1; }
-      50% { transform:scale(1.45); opacity:0.6; }
-      100% { transform:scale(1); opacity:1; }
-    }
+                <!-- Canvas -->
+                <canvas id="waveCanvas" class="w-full h-full block cursor-crosshair"></canvas>
+                
+                <!-- Overlay Text -->
+                <div class="absolute bottom-6 left-6 pointer-events-none">
+                    <div class="flex items-center gap-2 mb-1">
+                        <div class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
+                        <span class="text-xs text-indigo-400 font-mono uppercase tracking-widest">Processing</span>
+                    </div>
+                    <div class="text-3xl text-white font-medium tracking-tight" id="activeInstrumentLabel">
+                        Violin Ensemble
+                    </div>
+                </div>
+            </div>
 
-    /* footer bar logos & text */
-    .footer{
-      position:fixed;
-      bottom:18px;
-      left:50%;
-      transform:translateX(-50%);
-      z-index:60;
-      color:rgba(255,255,255,0.8);
-      font-size:13px;
-      display:flex;
-      gap:18px;
-      align-items:center;
-      padding:8px 16px;
-      border-radius:12px;
-      backface-visibility:hidden;
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border:1px solid rgba(255,255,255,0.02);
-      backdrop-filter: blur(6px);
-    }
+            <!-- Right: Instrument Selection -->
+            <div class="w-full md:w-60 border-l border-zinc-900/50 bg-zinc-950/30 flex flex-col">
+                <div class="p-4 border-b border-zinc-900/50">
+                    <input type="text" placeholder="Search instruments..." class="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-600 focus:outline-none focus:border-zinc-700 transition-colors">
+                </div>
+                
+                <div class="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
+                    <!-- Instrument Items -->
+                    <button onclick="selectInstrument(this, 'violin', '#fbbf24')" class="w-full text-left p-3 rounded-lg border border-indigo-500/30 bg-indigo-500/10 hover:bg-zinc-800/50 transition-all group relative overflow-hidden active-instrument">
+                        <div class="flex items-center gap-3 relative z-10">
+                            <span class="iconify text-indigo-400 group-hover:text-indigo-300" data-icon="lucide:music-2" data-width="16"></span>
+                            <div>
+                                <div class="text-xs font-medium text-zinc-200">Violin Ensemble</div>
+                                <div class="text-[10px] text-zinc-500">Orchestral</div>
+                            </div>
+                        </div>
+                    </button>
 
-    /* small "made in" badge */
-    .made-badge{
-      position:fixed;
-      right:18px;
-      bottom:18px;
-      z-index:70;
-      background:rgba(0,0,0,0.6);
-      border-radius:8px;
-      padding:8px 10px;
-      font-size:12px;
-      color:rgba(255,255,255,0.8);
-      border:1px solid rgba(255,255,255,0.03);
-    }
+                    <button onclick="selectInstrument(this, 'sax', '#ec4899')" class="w-full text-left p-3 rounded-lg border border-transparent hover:bg-zinc-900 transition-all group">
+                        <div class="flex items-center gap-3">
+                            <span class="iconify text-zinc-600 group-hover:text-pink-400 transition-colors" data-icon="lucide:wind" data-width="16"></span>
+                            <div>
+                                <div class="text-xs font-medium text-zinc-400 group-hover:text-zinc-200">Alto Saxophone</div>
+                                <div class="text-[10px] text-zinc-600">Jazz / Solo</div>
+                            </div>
+                        </div>
+                    </button>
 
-    /* SVG container covers entire viewport (behind the layout) */
-    #fx-svg{
-      position:fixed;
-      left:0;
-      top:0;
-      width:100%;
-      height:100%;
-      z-index:5;
-      pointer-events:none;
-    }
+                    <button onclick="selectInstrument(this, 'synth', '#22d3ee')" class="w-full text-left p-3 rounded-lg border border-transparent hover:bg-zinc-900 transition-all group">
+                        <div class="flex items-center gap-3">
+                            <span class="iconify text-zinc-600 group-hover:text-cyan-400 transition-colors" data-icon="lucide:zap" data-width="16"></span>
+                            <div>
+                                <div class="text-xs font-medium text-zinc-400 group-hover:text-zinc-200">Analog Lead</div>
+                                <div class="text-[10px] text-zinc-600">Synthesizer</div>
+                            </div>
+                        </div>
+                    </button>
 
-    /* small pixelated border effect */
-    .pixel-border {
-      position:fixed;
-      inset:0;
-      z-index:6;
-      pointer-events:none;
-      background-image:
-        radial-gradient(circle at 2% 50%, rgba(0,186,255,0.08) 0px, transparent 6px),
-        radial-gradient(circle at 98% 50%, rgba(0,186,255,0.06) 0px, transparent 6px);
-      mask-image: linear-gradient(90deg, rgba(0,0,0,0.0), rgba(0,0,0,0.9) 6%, rgba(0,0,0,0.9) 94%, rgba(0,0,0,0));
-    }
+                    <button onclick="selectInstrument(this, 'guitar', '#f87171')" class="w-full text-left p-3 rounded-lg border border-transparent hover:bg-zinc-900 transition-all group">
+                        <div class="flex items-center gap-3">
+                            <span class="iconify text-zinc-600 group-hover:text-red-400 transition-colors" data-icon="lucide:guitar" data-width="16"></span>
+                            <div>
+                                <div class="text-xs font-medium text-zinc-400 group-hover:text-zinc-200">Overdrive Strat</div>
+                                <div class="text-[10px] text-zinc-600">Electric Guitar</div>
+                            </div>
+                        </div>
+                    </button>
 
-    /* responsive tweaks */
-    @media (max-width:980px){
-      .wrap{ grid-template-columns: 1fr; padding:60px 5vw; gap:24px; }
-      h1{ font-size:40px; }
-      .stage{ height:60vh; }
-      .center-orb{ left:70%; }
-    }
-
-    @media (max-width:520px){
-      h1{ font-size:30px; }
-      .hero{ max-width:100%; }
-      .nav{ top:10px; padding:6px 12px; gap:12px; }
-      .footer{ display:none; }
-    }
-  </style>
-</head>
-<body>
-  <!-- NAV -->
-  <div class="nav" role="navigation" aria-label="Main">
-    <div class="brand"><strong>Aura</strong></div>
-    <div class="menu">Philosophy <span style="opacity:.35">•</span> Ecosystem <span style="opacity:.35">•</span> Rates</div>
-    <div style="margin-left:18px;"><button class="pill">Start Engine</button></div>
-  </div>
-
-  <!-- SVG animation layer (behind content) -->
-  <svg id="fx-svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-    <defs>
-      <!-- turbulence for organic blob -->
-      <filter id="blobTurb" x="-50%" y="-50%" width="200%" height="200%">
-        <feTurbulence id="turb" type="fractalNoise" baseFrequency="0.015 0.012" numOctaves="3" stitchTiles="stitch"/>
-        <feColorMatrix type="saturate" values="2" />
-        <feGaussianBlur stdDeviation="20" result="blur"/>
-        <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-      </filter>
-
-      <!-- glow filter -->
-      <filter id="glow" x="-80%" y="-80%" width="260%" height="260%">
-        <feGaussianBlur stdDeviation="18" result="blur1"/>
-        <feMerge>
-          <feMergeNode in="blur1"/>
-          <feMergeNode in="SourceGraphic"/>
-        </feMerge>
-      </filter>
-
-      <radialGradient id="auraGrad" cx="50%" cy="50%">
-        <stop offset="0%" stop-color="#7ff8ff" stop-opacity="1"/>
-        <stop offset="40%" stop-color="#00e1ff" stop-opacity="0.9"/>
-        <stop offset="100%" stop-color="#0068b5" stop-opacity="0.18"/>
-      </radialGradient>
-    </defs>
-
-    <!-- big plasma blob (multiple concentric blurred shapes for depth) -->
-    <g id="plasmaGroup" filter="url(#glow)">
-      <path id="plasmaPath" fill="url(#auraGrad)" opacity="0.82"></path>
-      <path id="plasmaPath2" fill="url(#auraGrad)" opacity="0.42" style="mix-blend-mode: screen;"></path>
-    </g>
-
-    <!-- dynamic flow lines (paths will be updated by JS) -->
-    <g id="flowLayer" stroke-linecap="round" stroke-linejoin="round" fill="none"></g>
-
-    <!-- decorative dotted grid -->
-    <g id="dots" opacity="0.06"></g>
-  </svg>
-
-  <!-- pixel border overlay -->
-  <div class="pixel-border"></div>
-
-  <!-- Main layout -->
-  <div class="wrap" role="main">
-    <div class="hero" aria-label="Hero">
-      <h1><span class="accent">Architect your wealth</span><br/>with absolute precision.</h1>
-      <p class="lead">Advanced financial protocols merged with intuitive design. We provide the infrastructure to accelerate your economic legacy.</p>
-
-      <div class="btn-row">
-        <button class="btn-primary" id="initializeBtn" aria-label="Initialize Protocol">
-          Initialize Protocol
-          <div class="orbit-wrap" aria-hidden="true">
-            <div class="orbit"><div class="dot"></div></div>
-          </div>
-        </button>
-
-        <button class="btn-ghost">View Ecosystem →</button>
-      </div>
+                     <button onclick="selectInstrument(this, 'cello', '#a78bfa')" class="w-full text-left p-3 rounded-lg border border-transparent hover:bg-zinc-900 transition-all group">
+                        <div class="flex items-center gap-3">
+                            <span class="iconify text-zinc-600 group-hover:text-violet-400 transition-colors" data-icon="lucide:music" data-width="16"></span>
+                            <div>
+                                <div class="text-xs font-medium text-zinc-400 group-hover:text-zinc-200">Solo Cello</div>
+                                <div class="text-[10px] text-zinc-600">Chamber</div>
+                            </div>
+                        </div>
+                    </button>
+                    
+                    <button onclick="selectInstrument(this, 'flute', '#34d399')" class="w-full text-left p-3 rounded-lg border border-transparent hover:bg-zinc-900 transition-all group">
+                        <div class="flex items-center gap-3">
+                            <span class="iconify text-zinc-600 group-hover:text-emerald-400 transition-colors" data-icon="lucide:wind" data-width="16"></span>
+                            <div>
+                                <div class="text-xs font-medium text-zinc-400 group-hover:text-zinc-200">Wooden Flute</div>
+                                <div class="text-[10px] text-zinc-600">Ethnic</div>
+                            </div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer / Status Bar -->
+        <div class="bg-zinc-950 border-t border-zinc-900 px-4 py-2 flex items-center justify-between z-10">
+            <div class="flex items-center gap-4 text-[10px] text-zinc-500">
+                <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span> MIDI In</span>
+                <span>Latency: 4.2ms</span>
+                <span>44.1kHz</span>
+            </div>
+            <div class="text-[10px] text-zinc-600 font-mono">v2.1.0-beta</div>
+        </div>
     </div>
 
-    <div class="stage" aria-hidden="true">
-      <!-- center orb is placed visually (absolute) -->
-      <div class="center-orb" id="centerOrb">
-        <div class="glow"></div>
-      </div>
-    </div>
-  </div>
+    <!-- JavaScript for Animations and Logic -->
+    <script>
+        // Setup Canvas
+        const canvas = document.getElementById('waveCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let animationId;
+        let isPlaying = true;
+        
+        // State
+        let currentColor = '#818cf8'; // Indigo default
+        let currentInstrumentType = 'violin';
+        let particles = [];
+        let time = 0;
 
-  <div class="footer">
-    <div style="opacity:.9;">Amplitude</div>
-    <div style="opacity:.65;">Anthropic</div>
-    <div style="opacity:.55;">Airbrake</div>
-    <div style="opacity:.3;margin-left:10px;">• Trusted by industry leaders</div>
-  </div>
-
-  <div class="made-badge">Made in Aura</div>
-
-  <!-- Script: animation logic -->
-  <script>
-    // Responsive helper to map coordinates between screen and svg viewBox
-    const svg = document.getElementById('fx-svg');
-    const viewW = 1920, viewH = 1080;
-
-    // central orb target position (normalized relative to viewBox)
-    let orbPos = { x: 0.6 * viewW, y: 0.5 * viewH };
-
-    // Grab elements
-    const plasmaPath = document.getElementById('plasmaPath');
-    const plasmaPath2 = document.getElementById('plasmaPath2');
-    const turb = document.getElementById('turb');
-    const flowLayer = document.getElementById('flowLayer');
-    const dotsGroup = document.getElementById('dots');
-
-    // Create few flow lines (paths) that animate toward orb
-    const FLOW_COUNT = 6;
-    const flows = [];
-
-    function rand(min,max){ return Math.random()*(max-min)+min; }
-
-    // initialize flows: random near edges, curving toward orb
-    for(let i=0;i<FLOW_COUNT;i++){
-      const p = document.createElementNS('http://www.w3.org/2000/svg','path');
-      p.setAttribute('stroke-width', 1.8 + Math.random()*1.8);
-      p.setAttribute('stroke-linecap','round');
-      p.setAttribute('stroke','url(#auraGrad)');
-      p.setAttribute('opacity', 0.55);
-      p.setAttribute('stroke-dasharray','120');
-      p.setAttribute('stroke-dashoffset', String( Math.round(Math.random()*400) ));
-      flowLayer.appendChild(p);
-
-      flows.push({
-        el: p,
-        seedAngle: Math.random()*Math.PI*2,
-        start: { x: rand(0.02,0.98)*viewW, y: rand(0.02,0.98)*viewH },
-        ctrl1: { x: rand(0.3,0.7)*viewW, y: rand(0.1,0.9)*viewH },
-        ctrl2: { x: rand(0.3,0.7)*viewW, y: rand(0.1,0.9)*viewH },
-        phase: Math.random()*Math.PI*2,
-        speed: 0.001 + Math.random()*0.003
-      });
-    }
-
-    // add decorative dots grid
-    function buildDots(){
-      const gap = 28;
-      for(let x = 0; x < viewW; x+=gap){
-        for(let y = 0; y < viewH; y+=gap){
-          if(Math.random() > 0.995) {
-            const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
-            c.setAttribute('cx', x + (Math.random()*6-3));
-            c.setAttribute('cy', y + (Math.random()*6-3));
-            c.setAttribute('r', 0.9 + Math.random()*1.8);
-            c.setAttribute('fill','white');
-            dotsGroup.appendChild(c);
-          }
+        function resize() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            width = canvas.width;
+            height = canvas.height;
         }
-      }
-    }
-    buildDots();
+        window.addEventListener('resize', resize);
+        resize();
 
-    // plasma blob shape generator (smooth random blob via points -> closed spline)
-    function blobPath(cx, cy, baseRadius, points, noiseScale, time){
-      const pts = [];
-      for(let i=0;i<points;i++){
-        const a = (i/points) * Math.PI*2;
-        // Perlin-like simple noise: combine sines
-        const noise = Math.sin(a*2 + time*0.6) * 0.4 + Math.cos(a*3.7 + time*0.9) * 0.3 + Math.sin(time*0.4 + i)*0.2;
-        const r = baseRadius * (1 + noise*noiseScale);
-        const x = cx + Math.cos(a) * r;
-        const y = cy + Math.sin(a) * r;
-        pts.push([x,y]);
-      }
-      // convert pts to smooth svg path (Catmull-Rom -> bezier conversion)
-      function catmullRom2bezier(points){
-        let d = "M" + points[0][0].toFixed(2) + " " + points[0][1].toFixed(2);
-        for(let i=0;i<points.length;i++){
-          const p0 = points[(i-1+points.length)%points.length];
-          const p1 = points[i];
-          const p2 = points[(i+1)%points.length];
-          const p3 = points[(i+2)%points.length];
+        // Particle Class for "Blurbs"
+        class Particle {
+            constructor() {
+                this.reset();
+            }
 
-          const cp1x = p1[0] + (p2[0]-p0[0]) / 6;
-          const cp1y = p1[1] + (p2[1]-p0[1]) / 6;
-          const cp2x = p2[0] - (p3[0]-p1[0]) / 6;
-          const cp2y = p2[1] - (p3[1]-p1[1]) / 6;
-          d += ` C ${cp1x.toFixed(2)} ${cp1y.toFixed(2)}, ${cp2x.toFixed(2)} ${cp2y.toFixed(2)}, ${p2[0].toFixed(2)} ${p2[1].toFixed(2)}`;
+            reset() {
+                this.x = Math.random() * width * 0.2; // Start left
+                this.y = height / 2 + (Math.random() - 0.5) * 50;
+                this.vx = Math.random() * 4 + 2; // Speed right
+                this.vy = (Math.random() - 0.5) * 2;
+                this.size = Math.random() * 2 + 1;
+                this.life = 1;
+                this.color = currentColor;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life -= 0.005;
+                
+                // Add waviness
+                this.y += Math.sin(this.x * 0.05 + time) * 2;
+
+                if (this.x > width || this.life <= 0) {
+                    this.reset();
+                }
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = this.color + Math.floor(this.life * 255).toString(16).padStart(2,'0'); // Add opacity
+                ctx.fill();
+                
+                // Glow
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = this.color;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
         }
-        d += " Z";
-        return d;
-      }
-      return catmullRom2bezier(pts);
-    }
 
-    // main animation loop
-    let lastT = null;
-    let t = 0;
+        // Initialize particles
+        for(let i = 0; i < 60; i++) {
+            particles.push(new Particle());
+        }
 
-    function animate(now){
-      if(!lastT) lastT = now;
-      const dt = (now - lastT) / 1000; // seconds
-      lastT = now;
-      t += dt;
+        function drawWave(yOffset, amplitude, frequency, speed, color, thickness) {
+            ctx.beginPath();
+            ctx.lineWidth = thickness;
+            ctx.strokeStyle = color;
+            
+            for (let x = 0; x < width; x++) {
+                let y = height / 2 + yOffset;
+                
+                // Complex wave math
+                const wave1 = Math.sin(x * frequency + time * speed);
+                const wave2 = Math.cos(x * (frequency * 0.5) + time * (speed * 1.2));
+                const noise = (Math.random() - 0.5) * (amplitude * 0.1); // Jitter
+                
+                // Morph shape based on x position (input -> output)
+                const progress = x / width;
+                const morphFactor = Math.min(1, Math.max(0, (progress - 0.3) * 2)); // 0 on left, 1 on right
+                
+                // Left side: smooth vocal input
+                let yInput = wave1 * amplitude * (1 - morphFactor);
+                
+                // Right side: instrument output (changes based on type)
+                let yOutput = 0;
+                if (currentInstrumentType === 'violin') {
+                    // Smooth, harmonic
+                    yOutput = (wave1 + wave2 * 0.5) * amplitude * morphFactor;
+                } else if (currentInstrumentType === 'sax') {
+                    // More chaotic
+                    yOutput = (Math.sin(x * frequency * 2 + time) * amplitude * 1.2) * morphFactor;
+                } else if (currentInstrumentType === 'synth') {
+                    // Square-ish
+                    yOutput = (Math.sign(Math.sin(x * frequency + time)) * amplitude * 0.8) * morphFactor;
+                } else {
+                    yOutput = wave1 * amplitude * morphFactor;
+                }
 
-      // move orb gently (subtle drifting)
-      const orbDriftRadius = Math.min(window.innerWidth, window.innerHeight) * 0.05;
-      const orbX = orbPos.x + Math.cos(t*0.32) * orbDriftRadius * 0.02 * (window.innerWidth/1200);
-      const orbY = orbPos.y + Math.sin(t*0.41) * orbDriftRadius * 0.03 * (window.innerHeight/700);
+                y += yInput + yOutput + noise;
+                
+                if (x === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+        }
 
-      // compute plasma blob centered near orb but drifting outward slowly
-      const centerX = orbX + Math.cos(t*0.12)* (window.innerWidth*0.08);
-      const centerY = orbY + Math.sin(t*0.09)* (window.innerHeight*0.03);
+        function animate() {
+            if (!isPlaying) return;
+            
+            // Clear with trail effect
+            ctx.fillStyle = 'rgba(9, 9, 11, 0.2)'; // Zinc-950 with opacity
+            ctx.fillRect(0, 0, width, height);
+            
+            time += 0.1;
 
-      const baseR = Math.min(viewW, viewH) * 0.35 * (0.9 + Math.sin(t*0.21)*0.06);
+            // Draw Divider Visual
+            const midX = width / 2;
+            const gradient = ctx.createLinearGradient(midX - 100, 0, midX + 100, 0);
+            gradient.addColorStop(0, 'rgba(255,255,255,0.05)');
+            gradient.addColorStop(0.5, currentColor + '33'); // Transparent color
+            gradient.addColorStop(1, 'rgba(255,255,255,0.05)');
+            
+            // Center Glow
+            const glowSize = 100 + Math.sin(time * 0.5) * 20;
+            const radialG = ctx.createRadialGradient(midX, height/2, 0, midX, height/2, glowSize);
+            radialG.addColorStop(0, currentColor + '10');
+            radialG.addColorStop(1, 'transparent');
+            ctx.fillStyle = radialG;
+            ctx.fillRect(0,0,width,height);
 
-      const path1 = blobPath(centerX, centerY, baseR, 28, 0.18, t*1.2);
-      const path2 = blobPath(centerX + Math.cos(t*0.71)*60, centerY + Math.sin(t*0.6)*40, baseR*0.78, 22, 0.26, t*1.5);
+            // Draw Input Wave (Ghost)
+            drawWave(0, 30, 0.01, 1, 'rgba(255,255,255,0.1)', 1);
 
-      plasmaPath.setAttribute('d', path1);
-      plasmaPath2.setAttribute('d', path2);
-      plasmaPath.setAttribute('transform', `translate(0,0)`);
-      plasmaPath2.setAttribute('transform', `translate(0,0)`);
+            // Draw Main Morphing Wave
+            drawWave(0, 50, 0.015, 1.5, currentColor, 2);
+            
+            // Draw Secondary Harmony Wave
+            drawWave(0, 30, 0.03, 2, currentColor, 0.5);
 
-      // nudge feTurbulence for soft organic movement
-      const bfreq = 0.012 + 0.006*Math.abs(Math.sin(t*0.45));
-      turb.setAttribute('baseFrequency', `${bfreq} ${bfreq*0.8}`);
+            // Update and draw particles
+            particles.forEach(p => {
+                p.color = currentColor;
+                
+                // Move particles faster near center
+                const distToCenter = Math.abs(p.x - width/2);
+                if (distToCenter < 100) {
+                    p.y += (Math.random() - 0.5) * 5;
+                }
+                
+                p.update();
+                p.draw();
+            });
 
-      // animate flows: control points gradually move toward orb
-      for(let i=0;i<flows.length;i++){
-        const f = flows[i];
-        // move start slowly around edges
-        f.phase += f.speed * (1 + 0.5*Math.sin(t*0.7 + i));
-        const sx = f.start.x + Math.cos(t*0.2 + i) * 18 * (i%2?1:-1);
-        const sy = f.start.y + Math.sin(t*0.15 + i*0.7) * 14;
+            // Draw Frequency Bars (Visualizer at bottom)
+            const bars = 40;
+            const barWidth = width / bars;
+            for(let i=0; i<bars; i++) {
+                const h = Math.abs(Math.sin(i * 0.2 + time)) * 30 * (Math.random() * 0.5 + 0.5);
+                ctx.fillStyle = i > bars/2 ? currentColor + '22' : 'rgba(255,255,255,0.05)';
+                ctx.fillRect(i * barWidth, height - h, barWidth - 2, h);
+            }
 
-        // control points drift and get attracted to orb
-        const c1x = f.ctrl1.x + Math.sin(t*0.9 + i) * 24 - (f.ctrl1.x - orbX) * 0.01;
-        const c1y = f.ctrl1.y + Math.cos(t*0.7 + i) * 18 - (f.ctrl1.y - orbY) * 0.01;
-        const c2x = f.ctrl2.x + Math.cos(t*0.6 + i) * 12 - (f.ctrl2.x - orbX) * 0.006;
-        const c2y = f.ctrl2.y + Math.sin(t*1.2 + i) * 20 - (f.ctrl2.y - orbY) * 0.006;
+            animationId = requestAnimationFrame(animate);
+        }
 
-        // a nice cubic bezier path from start -> ctrl1 -> ctrl2 -> near orb
-        const targetX = orbX + Math.cos(i*1.3 + t*0.3) * (60 + i*12);
-        const targetY = orbY + Math.sin(i*0.9 + t*0.24) * (30 + i*8);
+        // Logic for controls
+        function selectInstrument(btn, type, color) {
+            // Update UI styles
+            document.querySelectorAll('button').forEach(b => {
+                b.classList.remove('active-instrument', 'bg-indigo-500/10', 'border-indigo-500/30');
+                b.classList.add('border-transparent');
+                // Reset icons
+                const icon = b.querySelector('.iconify');
+                if(icon) icon.classList.remove('text-indigo-400');
+            });
+            
+            // Add active styles
+            btn.classList.add('active-instrument', 'bg-indigo-500/10', 'border-indigo-500/30');
+            btn.classList.remove('border-transparent');
+            btn.querySelector('.iconify').classList.add('text-indigo-400');
 
-        const d = `M ${sx.toFixed(2)} ${sy.toFixed(2)} C ${c1x.toFixed(2)} ${c1y.toFixed(2)}, ${c2x.toFixed(2)} ${c2y.toFixed(2)}, ${targetX.toFixed(2)} ${targetY.toFixed(2)}`;
-        f.el.setAttribute('d', d);
+            // Update State
+            currentInstrumentType = type;
+            currentColor = color;
+            document.documentElement.style.setProperty('--glow-color', color);
+            
+            // Update Label
+            const title = btn.querySelector('div > .text-xs').innerText;
+            document.getElementById('activeInstrumentLabel').innerText = title;
+            document.getElementById('activeInstrumentLabel').style.color = color; // Slight tint
+        }
 
-        // animate dashoffset to make stroke "flow" toward the orb
-        const dash = parseFloat(f.el.getAttribute('stroke-dashoffset') || 0);
-        f.el.setAttribute('stroke-dashoffset', (dash - (80 + i*12)*dt).toFixed(2));
-      }
+        // Knob Logic
+        function adjustKnob(id) {
+            const track = document.getElementById(`knob-${id}-track`);
+            const tick = document.getElementById(`knob-${id}-tick`);
+            
+            // Simulate random change for demo
+            const newVal = Math.random() * 276;
+            track.style.strokeDashoffset = newVal;
+            
+            // Rotate tick roughly based on offset
+            const rotation = ((276 - newVal) / 276) * 270 - 135; // Map to -135 to 135 deg
+            tick.style.transform = `translateY(-16px) rotate(${rotation}deg)`;
+        }
 
-      requestAnimationFrame(animate);
-    }
+        function togglePlayback() {
+            isPlaying = !isPlaying;
+            const icon = document.querySelector('#playBtn .iconify');
+            if (isPlaying) {
+                icon.setAttribute('data-icon', 'lucide:pause');
+                animate();
+            } else {
+                icon.setAttribute('data-icon', 'lucide:play');
+            }
+        }
 
-    requestAnimationFrame(animate);
+        // Start animation
+        animate();
 
-    // Update orbPos when window resizes or on load (map center target relative to viewport)
-    function updateOrbPos(){
-      // place orb visually around right center area (like screenshot)
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
-      // convert a target percentage of visible area to viewBox coords
-      const pctX = 0.62; // center-right
-      const pctY = 0.52;
-      const rect = svg.getBoundingClientRect();
-      const scaleX = viewW / rect.width;
-      const scaleY = viewH / rect.height;
-      // Map viewport pct to viewBox coords
-      orbPos.x = pctX * viewW;
-      orbPos.y = pctY * viewH;
-    }
-    window.addEventListener('resize', updateOrbPos);
-    updateOrbPos();
-
-    // Cursor-interaction: small repulsion and velocity on flows and orb
-    let mouse = {x: null, y: null};
-    window.addEventListener('mousemove', (e)=>{
-      const rect = svg.getBoundingClientRect();
-      // map to viewBox coords
-      mouse.x = (e.clientX - rect.left) * (viewW / rect.width);
-      mouse.y = (e.clientY - rect.top) * (viewH / rect.height);
-
-      // nudge orb slightly toward cursor
-      if(mouse.x && mouse.y){
-        orbPos.x += (mouse.x - orbPos.x) * 0.02;
-        orbPos.y += (mouse.y - orbPos.y) * 0.02;
-      }
-    });
-
-    // Slight automatic cursor-free drifting: keep orb near target but wandering
-    // Also, allow clicking the initialize button to create a ripple effect
-    const initBtn = document.getElementById('initializeBtn');
-    initBtn.addEventListener('click', ()=> {
-      // create a quick pulse: expand baseR briefly and flash glow
-      const initial = 1.0;
-      let start = performance.now();
-      const dur = 620;
-      function pulse(now){
-        const p = Math.min(1, (now - start)/dur);
-        // temporarily alter turb frequency for a flash-like feel
-        turb.setAttribute('baseFrequency', `${0.028 * (1-p) + 0.002*p} ${0.022 * (1-p) + 0.002*p}`);
-        if(p < 1) requestAnimationFrame(pulse);
-      }
-      requestAnimationFrame(pulse);
-      // small creative haptic feedback using focus
-      initBtn.animate([{transform:'scale(1)'},{transform:'scale(0.992)'},{transform:'scale(1)'}], {duration:320, easing:'ease-out'});
-    });
-
-    // Ensure SVG scales nicely on orientation change / load
-    window.addEventListener('load', ()=>{
-      // optional: set initial plasma shapes so page isn't blank for a frame
-      requestAnimationFrame(animate);
-    });
-
-  </script>
+        // Initial Knob setup
+        document.documentElement.style.setProperty('--glow-color', '#818cf8');
+        
+    </script>
 </body>
 </html>
